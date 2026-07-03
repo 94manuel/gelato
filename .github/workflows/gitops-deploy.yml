@@ -1,0 +1,99 @@
+name: Build images and update ArgoCD GitOps
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+
+concurrency:
+  group: gelato-main-deploy
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  API_IMAGE: ghcr.io/94manuel/gelato-api
+  WEB_IMAGE: ghcr.io/94manuel/gelato-web
+
+jobs:
+  build-publish-and-gitops:
+    name: Build, publish and update manifests
+    runs-on: ubuntu-latest
+    if: ${{ github.actor != 'github-actions[bot]' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set image tag
+        id: vars
+        shell: bash
+        run: |
+          SHORT_SHA="${GITHUB_SHA::7}"
+          echo "short_sha=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "image_tag=sha-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          push: true
+          tags: |
+            ${{ env.API_IMAGE }}:${{ steps.vars.outputs.image_tag }}
+            ${{ env.API_IMAGE }}:main
+          cache-from: type=gha,scope=gelato-api
+          cache-to: type=gha,mode=max,scope=gelato-api
+
+      - name: Build and push Web image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          push: true
+          tags: |
+            ${{ env.WEB_IMAGE }}:${{ steps.vars.outputs.image_tag }}
+            ${{ env.WEB_IMAGE }}:main
+          cache-from: type=gha,scope=gelato-web
+          cache-to: type=gha,mode=max,scope=gelato-web
+
+      - name: Install Kustomize
+        uses: imranismail/setup-kustomize@v2
+
+      - name: Update production image tags
+        shell: bash
+        run: |
+          cd k8s/overlays/prod
+          kustomize edit set image \
+            ${{ env.API_IMAGE }}=${{ env.API_IMAGE }}:${{ steps.vars.outputs.image_tag }} \
+            ${{ env.WEB_IMAGE }}=${{ env.WEB_IMAGE }}:${{ steps.vars.outputs.image_tag }}
+          cat kustomization.yaml
+
+      - name: Commit GitOps manifest update
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet; then
+            echo "No manifest changes to commit."
+            exit 0
+          fi
+          git add k8s/overlays/prod/kustomization.yaml
+          git commit -m "chore(gitops): deploy ${GITHUB_SHA::7} [skip ci]"
+          git push

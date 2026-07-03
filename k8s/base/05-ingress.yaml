@@ -1,0 +1,48 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gelato-ingress
+  namespace: gelato
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: gelato.cybervestigio.com
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: gelato-api
+                port:
+                  number: 3001
+          - path: /docs
+            pathType: Prefix
+            backend:
+              service:
+                name: gelato-api
+                port:
+                  number: 3001
+          - path: /docs-json
+            pathType: Prefix
+            backend:
+              service:
+                name: gelato-api
+                port:
+                  number: 3001
+          - path: /docs-yaml
+            pathType: Prefix
+            backend:
+              service:
+                name: gelato-api
+                port:
+                  number: 3001
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gelato-web
+                port:
+                  number: 3000

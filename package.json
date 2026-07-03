@@ -1,0 +1,40 @@
+{
+  "name": "gelato-recipes-platform",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Plataforma DDD para formular, balancear y escalar recetas de gelato.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run build -w @gelato/gelato-core && concurrently \"npm run dev -w @gelato/gelato-core\" \"npm run dev -w @gelato/api\" \"npm run dev -w @gelato/web\"",
+    "build": "npm run build -w @gelato/gelato-core && npm run build -w @gelato/api && npm run build -w @gelato/web",
+    "lint": "npm run lint -w @gelato/api && npm run lint -w @gelato/web",
+    "docker:api": "docker build -t gelato-api:local -f apps/api/Dockerfile .",
+    "docker:web": "docker build -t gelato-web:local -f apps/web/Dockerfile .",
+    "k8s:apply": "kubectl apply -k k8s/overlays/local",
+    "k8s:delete": "kubectl delete -k k8s/overlays/local --ignore-not-found=true",
+    "dev:api": "npm run build -w @gelato/gelato-core && npm run dev -w @gelato/api",
+    "dev:web": "npm run build -w @gelato/gelato-core && npm run dev -w @gelato/web",
+    "clean": "node -e \"require('fs').rmSync('apps/api/dist',{recursive:true,force:true});require('fs').rmSync('packages/gelato-core/dist',{recursive:true,force:true});require('fs').rmSync('apps/web/.next',{recursive:true,force:true})\"",
+    "docker:build:api": "docker build -t ghcr.io/94manuel/gelato-api:local -f apps/api/Dockerfile .",
+    "docker:build:web": "docker build -t ghcr.io/94manuel/gelato-web:local -f apps/web/Dockerfile .",
+    "docker:build": "npm run docker:build:api && npm run docker:build:web",
+    "k8s:apply:prod": "kubectl apply -k k8s/overlays/prod",
+    "k8s:status": "kubectl get deploy,svc,ingress,pods -n gelato",
+    "argocd:apply": "kubectl apply -f argocd/gelato-platform-app.yaml",
+    "argocd:sync": "argocd app sync gelato-recipes-platform --grpc-web",
+    "argocd:status": "argocd app get gelato-recipes-platform --grpc-web",
+    "deploy:local": "powershell -ExecutionPolicy Bypass -File scripts/gelato-deploy.ps1 deploy-local",
+    "deploy:argocd": "powershell -ExecutionPolicy Bypass -File scripts/gelato-deploy.ps1 apply-argocd"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "typescript": "^5.8.3"
+  },
+  "engines": {
+    "node": ">=22.0.0",
+    "npm": ">=10.0.0"
+  }
+}

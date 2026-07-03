@@ -1,0 +1,115 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Recipe {
+  id                         String          @id @default(uuid())
+  name                       String
+  type                       String
+  targetWeightGrams          Float
+  ingredients                Json
+  balance                    Json
+  status                     String          @default("draft")
+  versionNumber              Int             @default(1)
+  averageRating              Float           @default(0)
+  bestRating                 Float           @default(0)
+  approvedForProduction      Boolean         @default(false)
+  productionApprovedAt       DateTime?
+  productionApprovedBy       String?
+  productionApprovedNotes    String?
+  productionApprovedVersion  Int?
+  productionSnapshot         Json?
+  notes                      RecipeNote[]
+  history                    RecipeHistory[]
+  createdAt                  DateTime        @default(now())
+  updatedAt                  DateTime        @updatedAt
+}
+
+model RecipeNote {
+  id        String   @id @default(uuid())
+  recipeId  String
+  comment   String
+  rating    Float
+  author    String?
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([recipeId, createdAt])
+}
+
+model RecipeHistory {
+  id            String   @id @default(uuid())
+  recipeId      String
+  action        String
+  versionNumber Int
+  summary       String
+  snapshot      Json
+  noteId        String?
+  rating        Float?
+  author        String?
+  recipe        Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+
+  @@index([recipeId, createdAt])
+}
+
+model NeutralFormula {
+  id                 String   @id @default(uuid())
+  name               String
+  targetUsagePercent Float
+  components         Json
+  composition         Json
+  balance            Json
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model IngredientCatalog {
+  id                 String                    @id @default(uuid())
+  name               String
+  category           String
+  composition         Json
+  basePriceCOPPerKg  Float                     @default(0)
+  selectedSupplierId String?
+  supplierPrices     SupplierIngredientPrice[]
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
+}
+
+model Supplier {
+  id             String                    @id @default(uuid())
+  name           String
+  contactName    String?
+  phone          String?
+  email          String?
+  notes          String?
+  qualityScore   Int                       @default(80)
+  serviceScore   Int                       @default(80)
+  priceScore     Int                       @default(80)
+  deliveryScore  Int                       @default(80)
+  totalScore     Float                     @default(80)
+  prices         SupplierIngredientPrice[]
+  createdAt      DateTime                  @default(now())
+  updatedAt      DateTime                  @updatedAt
+}
+
+model SupplierIngredientPrice {
+  id             String            @id @default(uuid())
+  ingredientId   String
+  supplierId     String
+  priceCOPPerKg  Float
+  leadTimeDays   Int               @default(1)
+  available      Boolean           @default(true)
+  notes          String?
+  ingredient     IngredientCatalog @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  supplier       Supplier          @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@unique([ingredientId, supplierId])
+}

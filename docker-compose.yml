@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: gelato-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: gelato
+      POSTGRES_USER: gelato
+      POSTGRES_PASSWORD: gelato123
+    ports:
+      - "5432:5432"
+    volumes:
+      - gelato-postgres-data:/var/lib/postgresql/data
+
+volumes:
+  gelato-postgres-data:
