@@ -4,9 +4,13 @@ metadata:
   name: gelato-ingress
   namespace: gelato
   annotations:
-    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
-  ingressClassName: nginx
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - gelato.cybervestigio.com
+      secretName: gelato-tls
   rules:
     - host: gelato.cybervestigio.com
       http:

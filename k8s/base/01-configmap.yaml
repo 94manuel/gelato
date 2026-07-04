@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gelato-config
+  namespace: gelato
+data:
+  NODE_ENV: "production"
+  PORT: "3001"
+  CORS_ORIGIN: "https://gelato.cybervestigio.com,http://gelato.cybervestigio.com"
+  NEXT_PUBLIC_API_URL: "/api"

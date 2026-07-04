@@ -5,6 +5,12 @@ metadata:
   namespace: gelato
 spec:
   replicas: 2
+  revisionHistoryLimit: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
   selector:
     matchLabels:
       app: gelato-api
@@ -13,41 +19,58 @@ spec:
       labels:
         app: gelato-api
     spec:
+      imagePullSecrets:
+        - name: ghcr-secret
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
       containers:
         - name: api
           image: ghcr.io/94manuel/gelato-api:main
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
-            - containerPort: 3001
+            - name: http
+              containerPort: 3001
+          envFrom:
+            - configMapRef:
+                name: gelato-config
           env:
-            - name: PORT
-              value: "3001"
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
                   name: gelato-postgres-secret
                   key: DATABASE_URL
-            - name: CORS_ORIGIN
-              value: "https://gelato.cybervestigio.com,http://gelato.cybervestigio.com"
           readinessProbe:
             httpGet:
               path: /api/health
               port: 3001
-            initialDelaySeconds: 20
+            initialDelaySeconds: 15
             periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
           livenessProbe:
             httpGet:
               path: /api/health
               port: 3001
-            initialDelaySeconds: 30
+            initialDelaySeconds: 45
             periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
           resources:
             requests:
               cpu: 100m
-              memory: 192Mi
+              memory: 256Mi
             limits:
-              cpu: 500m
-              memory: 512Mi
+              cpu: 700m
+              memory: 768Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
 ---
 apiVersion: v1
 kind: Service
@@ -55,6 +78,7 @@ metadata:
   name: gelato-api
   namespace: gelato
 spec:
+  type: ClusterIP
   selector:
     app: gelato-api
   ports:

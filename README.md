@@ -2,6 +2,19 @@
 
 Web completa para formular, editar, visualizar, escalar y balancear recetas de gelato. Incluye backend NestJS con DDD, frontend Next.js con Atomic Design, paquete de dominio compartido para cálculos técnicos, PostgreSQL, Docker, Kubernetes y ArgoCD.
 
+
+## Producción en VPS
+
+El despliegue de producción está documentado en [`docs/PRODUCTION_DEPLOYMENT.md`](docs/PRODUCTION_DEPLOYMENT.md).
+
+Cambios importantes para producción:
+
+- PostgreSQL ya no se despliega dentro del namespace `gelato`. La API consume el PostgreSQL central `postgres.database.svc.cluster.local`.
+- Las credenciales reales de base de datos se crean como Secret en la VPS, no se versionan en Git.
+- Las migraciones Prisma se ejecutan mediante el Job `gelato-api-migrate`.
+- API y Web se despliegan en pods separados detrás de Ingress NGINX.
+- ArgoCD apunta al overlay `k8s/overlays/prod`.
+
 ## Funcionalidades principales
 
 - Crear recetas por tipo: base leche, fiordilatte, vainilla, café, chocolate, fruta con leche, lulo, sorbete, yogur, frutos secos/pistacho y vegano.

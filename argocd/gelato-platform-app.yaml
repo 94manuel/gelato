@@ -9,7 +9,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: git@github.com:94manuel/gelato.git
+    repoURL: https://github.com/94manuel/gelato.git
     targetRevision: main
     path: k8s/overlays/prod
   destination:

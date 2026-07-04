@@ -24,7 +24,7 @@ async function bootstrap() {
     .addTag("catalog", "Ingredientes, composición técnica, precios y proveedor recomendado")
     .addTag("suppliers", "Proveedores, puntajes y precios por ingrediente")
     .addServer("http://localhost:3001", "Local API")
-    .addServer("http://gelato.local", "Kubernetes Ingress")
+    .addServer("https://gelato.cybervestigio.com", "Production Ingress")
     .build();
 
   const document = SwaggerModule.createDocument(app, swaggerConfig);
