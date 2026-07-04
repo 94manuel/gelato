@@ -5,7 +5,7 @@ resources:
 images:
 - name: ghcr.io/94manuel/gelato-api
   newName: ghcr.io/94manuel/gelato-api
-  newTag: sha-19fef92
+  newTag: sha-01339c4
 - name: ghcr.io/94manuel/gelato-web
   newName: ghcr.io/94manuel/gelato-web
-  newTag: sha-19fef92
+  newTag: sha-01339c4
